@@ -32,15 +32,71 @@ class Dice {
 }
 
 //: Now, let's define a couple protocols for managing a dice-based game.
-
+protocol DiceGame {
+    var dice: Dice { get }
+    
+    func play()
+}
 
 
 //: Lastly, we'll create a custom class for tracking a player in our dice game.
-
+class Player {
+    let id: Int
+    var score = 0
+    let knockOutNumber: Int
+    var isKnockedOut = false
+    
+    init(id: Int) {
+        self.id = id
+        self.knockOutNumber = Int.random(in: 6...9)
+    }
+}
 
 
 //: With all that configured, let's build our dice game class called _Knock Out!_
-
+class KnockOut: DiceGame {
+    
+    var dice: Dice = Dice(sides: 6, generator: OneThroughTen())
+    var players: [Player] = []
+    
+    init(numberOfPlayers: Int) {
+        for playerID in 1...numberOfPlayers {
+            let player = Player(id: playerID)
+            players.append(player)
+        }
+    }
+    
+    func play() {
+        var gameHaseEnded = false
+        
+        while gameHaseEnded == false {
+            for player in players {
+                
+                guard player.isKnockedOut == false else { continue }
+                
+                let diceRoll = dice.roll() + dice.roll()
+                
+                if diceRoll == player.knockOutNumber {
+                    print("Player \(player.id) is knocked out by rolling a \(diceRoll)")
+                    player.isKnockedOut = true
+                    let activePlayers = players.filter ({ $0.isKnockedOut == false })
+                    
+                    if activePlayers.count == 0 {
+                        gameHaseEnded = true
+                        print("The game has ended. All players have been knocked out.")
+                    }
+                } else {
+                    player.score += diceRoll
+                    if player.score >= 100 {
+                        gameHaseEnded = true
+                        print("Player \(player.id) has won with a final score of \(player.score)")
+                        break
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 //: The following class is used to track the status of the above game, and will conform to the `DiceGameDelegate` protocol.
@@ -48,5 +104,7 @@ class Dice {
 
 
 //: Finally, we need to test out our game. Let's create a game instance, add a tracker, and instruct the game to play.
+let game = KnockOut(numberOfPlayers: 5)
+game.play()
 
 
